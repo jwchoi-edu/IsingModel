@@ -9,6 +9,10 @@
 You'll need Python (used 3.12.11 during development) and C++ compiler (used g++ 16.1.1 during development)
 
 ```bash
+pip install -r requirements.txt
+```
+
+```bash
 g++ -std=c++17 -O3 main.cpp -o ising
 ./ising <N> <J> <T> <steps> <step_interval>
 
