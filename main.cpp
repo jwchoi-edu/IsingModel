@@ -5,29 +5,36 @@
 #include <fstream>
 #include <chrono>
 #include <array>
+#include <string>
+#include <iomanip>
 
 using namespace std;
 
-int main() {
-    cin.tie(nullptr)->sync_with_stdio(false);
+int main(int argc, char* argv[]) {
+    if (argc != 6) {
+        cerr << "Usage: " << argv[0] << " <N> <J> <T> <steps> <step_interval>\n";
+        return 1;
+    }
 
-    int N, step_interval;
-    double J, T;
-    long long STEPS;
-    
-    if (!(cin >> N >> J >> T >> STEPS >> step_interval)) return 1;
+    int N = stoi(argv[1]);
+    double J = stod(argv[2]);
+    double T = stod(argv[3]);
+    long long STEPS = stoll(argv[4]);
+    int step_interval = stoi(argv[5]);
+
+    cin.tie(nullptr)->sync_with_stdio(false);
 
     auto start_time = chrono::high_resolution_clock::now();
 
     random_device rd;
     mt19937 gen(rd());
     
-    uniform_int_distribution<int> dis_grid(0, N * N - 1);
+    uniform_int_distribution<int> dis_coord(0, N - 1);
     uniform_real_distribution<double> dis_rand(0.0, 1.0);
 
     array<double, 9> exp_table{};
-    exp_table[2 + 4] = exp(-2.0 * J * 2 / T);
-    exp_table[4 + 4] = exp(-2.0 * J * 4 / T);
+    exp_table[2 + 4] = exp(-4.0 * J / T);
+    exp_table[4 + 4] = exp(-8.0 * J / T);
 
     vector<int> grid(N * N);
     long long total_spin = 0;
@@ -37,8 +44,13 @@ int main() {
         grid[i] = spin;
         total_spin += spin;
     }
-
-    ofstream outFile{"ising_data.txt"};
+auto now = chrono::system_clock::now();
+    auto time_t_now = chrono::system_clock::to_time_t(now);
+    
+    stringstream ss;
+    ss << "outputs/" << put_time(localtime(&time_t_now), "%Y-%m-%d-%H-%M-%S") << ".txt";
+    string filename = ss.str();
+    ofstream outFile{filename};
     if (!outFile.is_open()) {
         cerr << "Error opening file!\n";
         return 1;
@@ -46,9 +58,9 @@ int main() {
     outFile << N << " " << J << " " << T << " " << STEPS << " " << step_interval << "\n";
 
     for (long long step = 0; step < STEPS; ++step) {
-        int idx = dis_grid(gen);
-        int i = idx / N;
-        int j = idx % N;
+        int i = dis_coord(gen);
+        int j = dis_coord(gen);
+        int idx = i * N + j;
         int s = grid[idx];
 
         int top    = grid[(i == 0 ? N - 1 : i - 1) * N + j];
@@ -91,7 +103,7 @@ int main() {
     chrono::duration<double, std::milli> duration = end_time - start_time;
 
     cout << "Time taken: " << duration.count() << " ms\n";
-    cout << "Results saved to ising_data.txt\n";
+    cout << "Results saved to outputs/" << filename << "\n";
 
     return 0;
 }

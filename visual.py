@@ -1,13 +1,36 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from os import path
+from glob import glob
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument(
+    "--file", help="input file name (default: latest output file)", default=None
+)
+parser.add_argument(
+    "--interval",
+    type=int,
+    help="interval (ms/frame) for animation (default: 30)",
+    default=30,
+)
+args = parser.parse_args()
 
 steps = []
 magnetizations = []
 grids = []
 
-with open("ising_data.txt", "r") as f:
-    # 1. 맨 첫 번째 줄에서 C++ 파라미터 읽기
+if args.file:
+    latest_file = args.file
+else:
+    file_list = glob(path.join("outputs", "*.txt"))
+
+    latest_file = sorted(file_list)[-1]
+
+print(f"Reading data from {latest_file}")
+
+with open(latest_file, "r") as f:
     first_line = f.readline().strip().split()
     if not first_line:
         print("File is empty")
@@ -58,14 +81,10 @@ def update(frame):
     line.set_data(steps[: frame + 1], magnetizations[: frame + 1])
     return [im, line]
 
-interval = input("Enter the interval (ms/frame): ")
-try:
-    interval = int(interval)
-except ValueError:
-    print("Invalid input. Using default interval of 30 ms/frame.")
-    interval = 30
 
-ani = animation.FuncAnimation(fig, update, frames=len(grids), interval=interval, blit=True)
+ani = animation.FuncAnimation(
+    fig, update, frames=len(grids), interval=args.interval, blit=True
+)
 
 plt.tight_layout()
 plt.show()
